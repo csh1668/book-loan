@@ -1,0 +1,93 @@
+import logo from './logo.svg';
+import './App.css';
+import {useEffect, useState} from "react";
+import axios from "axios";
+import {Login, Signup} from "./siteuser/userComponents";
+
+function Book(props) {
+  const calculateFontSize = (text) => {
+    const maxLength = 20; // Maximum length of the text
+    const minFontSize = 24; // Minimum font size
+    const maxFontSize = 48; // Maximum font size
+
+    const fontSize = maxFontSize - (text.length / maxLength) * (maxFontSize - minFontSize);
+    return fontSize;
+  };
+
+  return (
+    <tr>
+      <td style={{ fontSize: `${calculateFontSize(props.book.title)}px` }}>{props.book.title}</td>
+      <td style={{ fontSize: `${calculateFontSize(props.book.description)}px` }}>{props.book.description}</td>
+      <td style={{ fontSize: `${calculateFontSize(props.book.author)}px` }}>{props.book.author}</td>
+    </tr>
+  );
+}
+
+function App() {
+  const [msg, setMsg] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [book, setBook] = useState([]);
+  const [logined, setLogined] = useState(false);
+
+  // useEffect(() => {
+  //   axios.get("/proxy/api/book/test")
+  //       .then(rsp => {
+  //         setMsg(rsp.data);
+  //       });
+  // });
+
+  const accessToken = localStorage.getItem('accessToken');
+
+  return (
+    <div className="App"> 
+        <header className="App-header">
+            <img src={logo} className="App-logo" alt="logo"/>
+            {logined ? 
+            <>
+            <p>Spring에서 받은 데이터: {msg}</p>
+            <div>
+            <input type='text' value={keyword} onChange={e => setKeyword(e.target.value)}/>
+            <input type='button' value='조회' onClick={() => {
+                axios.get('/proxy/api/book/list', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    params: {
+                      page: 0, keyword: keyword
+                    }
+                })
+                .then(rsp => {
+                    setBook(rsp.data.content);
+                    console.log(book);
+                })
+            }}/>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>제목</th>
+                  <th>설명</th>
+                  <th>저자</th>
+                </tr>
+              </thead>
+              <tbody>
+                {book.map((bookItem, index) => (
+                  <Book key={index} book={bookItem}></Book>
+                ))}
+              </tbody>
+            </table>
+            </>
+            :
+            <>
+            <div>환영합니다.</div>
+            <Login onSuccess={() => {
+                setLogined(true);
+            }}></Login>
+            </>
+            }
+        </header>
+    </div>
+  );
+}
+
+export default App;
